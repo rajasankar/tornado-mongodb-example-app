@@ -31,10 +31,10 @@ class BaseHandler( tornado.web.RequestHandler ):
     @property
     def firstCol( self ):
         return self.application.firstCol
-class DemoUI( BaseHandler ):
+class DemoUI( BaseHandler )
     def get( self ):
 	number= [i for i in range(0,10) ]
-        self.render( "one.html" , title = "one",numberlist=number )
+    self.render( "two.html" , title = "one",numberlist=number )
 class HomeHandler( BaseHandler ):
     def get( self ):
         self.render( "index.html" )
