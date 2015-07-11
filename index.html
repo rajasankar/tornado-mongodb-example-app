@@ -68,7 +68,7 @@ parse_command_line()</pre></div>
     <span class="pl-k">def</span> <span class="pl-en">get</span>( <span class="pl-smi">self</span> ):
         <span class="pl-v">self</span>.render( <span class="pl-s"><span class="pl-pds">"</span>index.html<span class="pl-pds">"</span></span> )</pre></div>
 
-<p>** render** renders the templete with the variables.</p>
+<p><strong>render</strong> renders the templete with the variables.</p>
 
 <h5>
 <a id="rendering-data-in-html-templete" class="anchor" href="#rendering-data-in-html-templete" aria-hidden="true"><span class="octicon octicon-link"></span></a>rendering data in html templete</h5>
@@ -207,16 +207,16 @@ logger.setLevel( logging.DEBUG )</pre></div>
 
 <p>listen is self explonatory. It exposes nginx running port to public.</p>
 
-<p>** proxy_pass** takes care of the load balancing between requests. Without that load wont be distributed.</p>
+<p><strong>proxy_pass</strong> takes care of the load balancing between requests. Without that load wont be distributed.</p>
 
-<p>** proxy_set_header** would set the actual ip of the request in the request headers. Which means, requests has the actual ip from which the app is accessed. If the app is exposed to public, the actual ip from which customers accessing would be forwared to tornado process.</p>
+<p><strong>proxy_set_header</strong> would set the actual ip of the request in the request headers. Which means, requests has the actual ip from which the app is accessed. If the app is exposed to public, the actual ip from which customers accessing would be forwared to tornado process.</p>
 
-<p>** limit_req zone** option defines the number of requests the server can handle per second or mintue. that is defined in this line</p>
+<p><strong>limit_req zone</strong> option defines the number of requests the server can handle per second or mintue. that is defined in this line</p>
 
 <pre lang="conf"><code>limit_req_zone $binary_remote_addr zone=api:1m  rate=100r/s;
 </code></pre>
 
-<p>** burst** allows how many requests can be handled at a time and nodelay configures if the requests should be put into the queue or not.</p>
+<p><strong>burst</strong> allows how many requests can be handled at a time and nodelay configures if the requests should be put into the queue or not.</p>
 
 <p>if rate is 100r/s and burst is 10 with nodelay, then 10 requests would be processed in batches.</p>
 
