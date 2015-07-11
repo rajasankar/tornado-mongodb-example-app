@@ -19,11 +19,237 @@
     </section>
 
     <section class="main-content">
+      <p>Tornado and MongoDB needs no introduction. Here I am going to explain how to host an app/api with Tornado+MongoDB using nginx server as a proxy/load balancing and supervisor for process management.</p>
+
+<p>This simple configuration can be done with few hours to up and run the site/api. </p>
+
+<p>First let us see the Tornado simple code.</p>
+
+<h5>
+<a id="template-and-static-file-paths" class="anchor" href="#template-and-static-file-paths" aria-hidden="true"><span class="octicon octicon-link"></span></a>Template and Static file paths:</h5>
+
+<p>Tornado has option to define, templates and statics file paths. For static paths, ensure that, you're calling <em>/static/</em> followed by file name. ie /static/static file (eg http://localhost/static/jquery.js). This can be changed using <strong>static_url_prefix</strong> option in the settings.</p>
+
+<p>example code:</p>
+
+<div class="highlight highlight-python"><pre>template_path <span class="pl-k">=</span> os.path.join( <span class="pl-s"><span class="pl-pds">'</span>/home/test/website/<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">"</span>templates<span class="pl-pds">"</span></span> ),
+static_path <span class="pl-k">=</span> os.path.join( <span class="pl-s"><span class="pl-pds">'</span>/home/test/website/<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>assets<span class="pl-pds">'</span></span> )</pre></div>
+
+<p>or simply,</p>
+
+<div class="highlight highlight-python"><pre>template_path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>/home/test/website/templates<span class="pl-pds">'</span></span>,
+static_path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>/home/test/website/assets<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="defining-portdb-settings" class="anchor" href="#defining-portdb-settings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Defining port/db settings</h5>
+
+<p>Passing the command line can be defined using "options" or can be parsed using parse_command_line option.</p>
+
+<div class="highlight highlight-python"><pre>define( <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>, <span class="pl-smi">default</span> <span class="pl-k">=</span> <span class="pl-c1">8888</span>, <span class="pl-smi">type</span> <span class="pl-k">=</span> <span class="pl-c1">int</span> )
+parse_command_line()</pre></div>
+
+<h5>
+<a id="defining-handlers-for-different-paths" class="anchor" href="#defining-handlers-for-different-paths" aria-hidden="true"><span class="octicon octicon-link"></span></a>Defining handlers for different paths</h5>
+
+<p>It is easy to map which url path should be served by which function. adding that in handlers takes care of that. It is also possible to map based on regular expressions too.</p>
+
+<div class="highlight highlight-python"><pre>handlers <span class="pl-k">=</span> [( <span class="pl-s"><span class="pl-k">r</span><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>, HomeHandler ),
+            ( <span class="pl-s"><span class="pl-k">r</span><span class="pl-pds">"</span>/api<span class="pl-pds">"</span></span>, MyAPIHandler ),
+            ( <span class="pl-s"><span class="pl-k">r</span><span class="pl-pds">"</span>/demo<span class="pl-pds">"</span></span>, DemoUI )
+            ]</pre></div>
+
+<p>functions</p>
+
+<div class="highlight highlight-python"><pre><span class="pl-k">class</span> <span class="pl-en">DemoUI</span>( <span class="pl-e">BaseHandler</span> )
+    <span class="pl-k">def</span> <span class="pl-en">get</span>( <span class="pl-smi">self</span> ):
+        number<span class="pl-k">=</span> [i <span class="pl-k">for</span> i <span class="pl-k">in</span> <span class="pl-c1">range</span>(<span class="pl-c1">0</span>,<span class="pl-c1">10</span>) ]
+        <span class="pl-v">self</span>.render( <span class="pl-s"><span class="pl-pds">"</span>one.html<span class="pl-pds">"</span></span> , <span class="pl-smi">title</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>one<span class="pl-pds">"</span></span>,<span class="pl-smi">numberlist</span><span class="pl-k">=</span>number )
+<span class="pl-k">class</span> <span class="pl-en">HomeHandler</span>( <span class="pl-e">BaseHandler</span> ):
+    <span class="pl-k">def</span> <span class="pl-en">get</span>( <span class="pl-smi">self</span> ):
+        <span class="pl-v">self</span>.render( <span class="pl-s"><span class="pl-pds">"</span>index.html<span class="pl-pds">"</span></span> )</pre></div>
+
+<p>** render** renders the templete with the variables.</p>
+
+<h5>
+<a id="rendering-data-in-html-templete" class="anchor" href="#rendering-data-in-html-templete" aria-hidden="true"><span class="octicon octicon-link"></span></a>rendering data in html templete</h5>
+
+<p>To pass the value to html templete and render it, pass the value to the variable defined in the templete.</p>
+
+<div class="highlight highlight-html"><pre>&lt;<span class="pl-ent">html</span>&gt;
+   &lt;<span class="pl-ent">head</span>&gt;
+      &lt;<span class="pl-ent">title</span>&gt;{{ title }}&lt;/<span class="pl-ent">title</span>&gt;
+   &lt;/<span class="pl-ent">head</span>&gt;
+   &lt;<span class="pl-ent">body</span>&gt;
+    &lt;<span class="pl-ent">div</span>&gt;
+        &lt;<span class="pl-ent">table</span>&gt;
+         {% for number in numberlist %}
+         &lt;<span class="pl-ent">tr</span>&gt;
+            &lt;<span class="pl-ent">td</span>&gt;{{ number }}&lt;/<span class="pl-ent">td</span>&gt;
+         &lt;/<span class="pl-ent">tr</span>&gt;
+         {% end %}
+         &lt;/<span class="pl-ent">table</span>&gt;
+        &lt;/<span class="pl-ent">div</span>&gt;
+    &lt;/<span class="pl-ent">div</span>&gt;
+   &lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;</pre></div>
+
+<h5>
+<a id="setting-multiple-inheritance" class="anchor" href="#setting-multiple-inheritance" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting multiple inheritance</h5>
+
+<p>Multiple inheritance useful for things such as db connections etc. DB connections can be resued using this.</p>
+
+<div class="highlight highlight-python"><pre><span class="pl-c1">super</span>( Example, <span class="pl-v">self</span> ).__init__( handlers, <span class="pl-k">**</span>settings )</pre></div>
+
+<h5>
+<a id="basehandler-for-property-definition" class="anchor" href="#basehandler-for-property-definition" aria-hidden="true"><span class="octicon octicon-link"></span></a>BaseHandler for property definition</h5>
+
+<p>once the property is defined in the basehandler, it will be availble to all the handlers. In the example, property for using db connection is defined.</p>
+
+<p>create connection in the <strong>init</strong> function</p>
+
+<div class="highlight highlight-python"><pre>session <span class="pl-k">=</span> MongoClient()
+<span class="pl-v">self</span>.firstCol <span class="pl-k">=</span> session.firstDB.firstCol
+<span class="pl-v">self</span>.secondCol <span class="pl-k">=</span> session.secondDB.secondCol</pre></div>
+
+<p>define the property in a <strong>basehandler</strong> calss</p>
+
+<div class="highlight highlight-python"><pre><span class="pl-k">class</span> <span class="pl-en">BaseHandler</span>( <span class="pl-e">tornado.web.RequestHandler</span> ):
+    <span class="pl-en">@<span class="pl-c1">property</span></span>
+    <span class="pl-k">def</span> <span class="pl-en">secondCol</span>( <span class="pl-smi">self</span> ):
+        <span class="pl-k">return</span> <span class="pl-v">self</span>.application.secondCol
+    <span class="pl-en">@<span class="pl-c1">property</span></span>
+    <span class="pl-k">def</span> <span class="pl-en">firstCol</span>( <span class="pl-smi">self</span> ):
+        <span class="pl-k">return</span> <span class="pl-v">self</span>.application.firstCol</pre></div>
+
+<p>Now, calling <strong>self.firstcol</strong> from any function refers to the connections</p>
+
+<h5>
+<a id="logging" class="anchor" href="#logging" aria-hidden="true"><span class="octicon octicon-link"></span></a>Logging</h5>
+
+<p>tornado enables default logging into access,error,general loggers. This can be turned off using --logging=none option when starting the server. It is also easy to send the log to different file. But issue come when you try to turn off default logging and log only needed.  For the default logger should be propageted  false. In the example only access log is turned off. Also rotating file handler for logger using to roate the log files if maximum size is reached. </p>
+
+<div class="highlight highlight-python"><pre>options.logging <span class="pl-k">=</span> <span class="pl-c1">None</span>
+access <span class="pl-k">=</span> logging.NullHandler()
+access.setLevel( logging.DEBUG )
+logging.getLogger( <span class="pl-s"><span class="pl-pds">"</span>tornado.access<span class="pl-pds">"</span></span> ).addHandler( access )
+logging.getLogger( <span class="pl-s"><span class="pl-pds">"</span>tornado.access<span class="pl-pds">"</span></span> ).propagate <span class="pl-k">=</span> <span class="pl-c1">False</span>
+LOG_FILENAME <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>/home/test/logging.log<span class="pl-pds">'</span></span>
+handler <span class="pl-k">=</span> logging.handlers.RotatingFileHandler( LOG_FILENAME, <span class="pl-smi">maxBytes</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span>, <span class="pl-smi">backupCount</span> <span class="pl-k">=</span> <span class="pl-c1">10</span> )
+formatter <span class="pl-k">=</span> logging.Formatter(
+        <span class="pl-s"><span class="pl-pds">'</span><span class="pl-c1">%(asctime)s</span> process [<span class="pl-c1">%(process)d</span>]: <span class="pl-c1">%(message)s</span><span class="pl-pds">'</span></span>,
+        <span class="pl-s"><span class="pl-pds">'</span><span class="pl-c1">%b</span> <span class="pl-c1">%d</span> <span class="pl-c1">%H</span>:<span class="pl-c1">%M</span>:<span class="pl-c1">%S</span><span class="pl-pds">'</span></span> )
+handler.setFormatter( formatter )
+logger <span class="pl-k">=</span> logging.getLogger()
+logger.addHandler( handler )
+logger.setLevel( logging.DEBUG )</pre></div>
+
+<h5>
+<a id="using-xsrf-cookie-to-make-app-secure" class="anchor" href="#using-xsrf-cookie-to-make-app-secure" aria-hidden="true"><span class="octicon octicon-link"></span></a>using xsrf cookie to make app secure</h5>
+
+<p>it is easy to restrict access to the app only via browser thus restricting crawling options. add xsrf_cookies = True, to the settings and add this to the html form</p>
+
+<div class="highlight highlight-html"><pre>{ % module xsrf_form_html() % }
+</pre></div>
+
+<p>when loading the form, xsrf cooking will be rendered as hidden parameter.</p>
+
+<p>if there is a need to disable xsrf for only one handler and enable for others, add this to the handler function. This will remove the check for that handler only.</p>
+
+<div class="highlight highlight-python"><pre>   <span class="pl-k">def</span> <span class="pl-en">check_xsrf_cookie</span>( <span class="pl-smi">self</span> ):
+        <span class="pl-k">pass</span></pre></div>
+
+<h3>
+<a id="confiuring-nginx" class="anchor" href="#confiuring-nginx" aria-hidden="true"><span class="octicon octicon-link"></span></a>Confiuring nginx</h3>
+
+<p>Tornado is an web server itself, so why we need <a href="http://nginx.org">Nginx</a> as a additional component?</p>
+
+<p>nginx is used as a proxy server and load balancer. nginx sits between the server and client, distributes the traffic and offers additional things as rate limiting etc.</p>
+
+<p>Load Balancing with nginx is easy. Let us say, you have four process running in a single machine and you want each process to handle the requests from users simultaneously you can configure that in nginx conf.</p>
+
+<p>Each process running separate port will be connected to ngnix sever and nginx’s single port shown to the user.</p>
+
+<p>defining app ip settings</p>
+
+<pre lang="conf"><code>upstream myapp
+    {
+        server 127.0.0.1:8888;
+        server 127.0.0.1:8889;
+        server 127.0.0.1:8890;
+        server 127.0.0.1:8891;
+    }
+</code></pre>
+
+<p>here, one server is going to listen all the four ips. Defining various ips using various ports is also available.</p>
+
+<p>Next defining server option</p>
+
+<pre lang="conf"><code>   server
+    {
+      listen 127.0.0.1:80;
+
+      location /
+      {
+        proxy_pass http://myapp;
+        proxy_set_header X-Real-IP $remote_addr;
+        limit_req zone=index burst=1;
+      }
+
+      location /api/
+      {
+        proxy_pass http://myapp;
+        proxy_set_header X-Real-IP $remote_addr;
+        limit_req zone=api burst=10 nodelay;
+      }
+
+    }
+</code></pre>
+
+<p>listen is self explonatory. It exposes nginx running port to public.</p>
+
+<p>** proxy_pass** takes care of the load balancing between requests. Without that load wont be distributed.</p>
+
+<p>** proxy_set_header** would set the actual ip of the request in the request headers. Which means, requests has the actual ip from which the app is accessed. If the app is exposed to public, the actual ip from which customers accessing would be forwared to tornado process.</p>
+
+<p>** limit_req zone** option defines the number of requests the server can handle per second or mintue. that is defined in this line</p>
+
+<pre lang="conf"><code>limit_req_zone $binary_remote_addr zone=api:1m  rate=100r/s;
+</code></pre>
+
+<p>** burst** allows how many requests can be handled at a time and nodelay configures if the requests should be put into the queue or not.</p>
+
+<p>if rate is 100r/s and burst is 10 with nodelay, then 10 requests would be processed in batches.</p>
+
+<h5>
+<a id="using-supervisor" class="anchor" href="#using-supervisor" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using Supervisor</h5>
+
+<p>Handling start/shutdown of the processes can be handled using <a href="http://supervisord.org">Supervisor</a></p>
+
+<p>let us say, four processes needs to be started for tornado,
+use this supervisor configuration to start those processes</p>
+
+<pre lang="conf"><code>[program:firstapp]
+process_name=firstapp%(process_num)s
+directory=/home/test/
+command=python /home/test/tornado_example.py --port=%(process_num)s --logging=debug
+stdout_logfile=/home/test/out-%(process_num)s.log
+stderr_logfile=/home/test/err-%(process_num)s.log
+startsecs=2
+numprocs=4
+numprocs_start=8888
+</code></pre>
+
+<p>Supervisor can restart the processes if there is an expection or system reboot.</p>
+
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/rajasankar/tornado-mongodb-example-app">Tornado-mongodb-example-app</a> is maintained by <a href="https://github.com/rajasankar">rajasankar</a>.</span>
 
         <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
+
     </section>
+
+  
   </body>
 </html>
+
